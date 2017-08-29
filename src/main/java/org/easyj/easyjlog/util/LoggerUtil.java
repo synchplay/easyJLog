@@ -1,16 +1,10 @@
 package org.easyj.easyjlog.util;
 
-import java.net.URI;
-
-import org.apache.logging.log4j.LogManager;
 import org.slf4j.ILoggerFactory;
 import org.slf4j.LoggerFactory;
 import org.slf4j.Marker;
 import org.slf4j.event.Level;
 import org.slf4j.spi.LocationAwareLogger;
-
-import ch.qos.logback.classic.joran.JoranConfigurator;
-import ch.qos.logback.core.util.StatusPrinter;
 
 /**
  * 日志打印工具 <br>
@@ -160,6 +154,51 @@ public final class LoggerUtil {
 	}
 
 	/**
+	 * 记录日志信息
+	 */
+	public static void debug(Marker marker, String fqcn, String message, Object[] argArray) {
+		if (!logger.isDebugEnabled(marker)) {
+			return;
+		}
+		logger.log(marker, fqcn, LocationAwareLogger.DEBUG_INT, message, argArray, null);
+	}
+
+	/**
+	 * 记录日志信息
+	 */
+	public static void debug(Marker marker, String message, Object... argArray) {
+		debug(marker, FQCN, message, argArray);
+	}
+
+	/**
+	 * 记录日志信息
+	 */
+	public static void debug(Marker marker, String message) {
+		debug(marker, FQCN, message, null);
+	}
+
+	/**
+	 * 记录日志信息
+	 */
+	public static void debug(String fqcn, String message, Object[] argArray) {
+		debug(null, fqcn, message, argArray);
+	}
+
+	/**
+	 * 记录日志信息
+	 */
+	public static void debug(String message, Object... argArray) {
+		debug(null, FQCN, message, argArray);
+	}
+
+	/**
+	 * 记录日志信息
+	 */
+	public static void debug(String message) {
+		debug(null, FQCN, message, null);
+	}
+
+	/**
 	 * 公共类获取调用者跟踪信息 <br/>
 	 * 下标说明：0（Thread.getStackTrace）、1（LogUtil.getTraceInfo）、2（公共类）、3（业务调用类）
 	 * 
@@ -190,40 +229,9 @@ public final class LoggerUtil {
 			ILoggerFactory factory = LoggerFactory.getILoggerFactory();
 
 			if (isLog4j2(factory)) {
-				org.apache.logging.log4j.core.LoggerContext context = (org.apache.logging.log4j.core.LoggerContext) LogManager
-						.getContext(false);
-				org.apache.logging.log4j.core.config.LoggerConfig loggerConfig = context.getConfiguration()
-						.getRootLogger();
-
-				if (Level.INFO.equals(newLevel)) {
-					loggerConfig.setLevel(org.apache.logging.log4j.Level.INFO);
-				} else if (Level.WARN.equals(newLevel)) {
-					loggerConfig.setLevel(org.apache.logging.log4j.Level.WARN);
-				} else if (Level.DEBUG.equals(newLevel)) {
-					loggerConfig.setLevel(org.apache.logging.log4j.Level.DEBUG);
-				} else if (Level.ERROR.equals(newLevel)) {
-					loggerConfig.setLevel(org.apache.logging.log4j.Level.ERROR);
-				} else if (Level.TRACE.equals(newLevel)) {
-					loggerConfig.setLevel(org.apache.logging.log4j.Level.TRACE);
-				}
-				context.updateLoggers();
-
+				Log4j2Config.changeRootLevel(newLevel);
 			} else if (isLogback(factory)) {
-				ch.qos.logback.classic.LoggerContext context = (ch.qos.logback.classic.LoggerContext) factory;
-				ch.qos.logback.classic.Logger loggerConfig = context
-						.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-
-				if (Level.INFO.equals(newLevel)) {
-					loggerConfig.setLevel(ch.qos.logback.classic.Level.INFO);
-				} else if (Level.WARN.equals(newLevel)) {
-					loggerConfig.setLevel(ch.qos.logback.classic.Level.WARN);
-				} else if (Level.DEBUG.equals(newLevel)) {
-					loggerConfig.setLevel(ch.qos.logback.classic.Level.DEBUG);
-				} else if (Level.ERROR.equals(newLevel)) {
-					loggerConfig.setLevel(ch.qos.logback.classic.Level.ERROR);
-				} else if (Level.TRACE.equals(newLevel)) {
-					loggerConfig.setLevel(ch.qos.logback.classic.Level.TRACE);
-				}
+				LogbackConfig.changeRootLevel(newLevel);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -241,21 +249,9 @@ public final class LoggerUtil {
 			ILoggerFactory factory = LoggerFactory.getILoggerFactory();
 
 			if (isLog4j2(factory)) {
-				org.apache.logging.log4j.core.LoggerContext context = (org.apache.logging.log4j.core.LoggerContext) LogManager
-						.getContext(false);
-				if (configFileLocation == null || configFileLocation.trim().length() == 0) {
-					context.reconfigure();
-				} else {
-					context.setConfigLocation(new URI(configFileLocation));
-				}
-
+				Log4j2Config.reconfigure(configFileLocation);
 			} else if (isLogback(factory)) {
-				ch.qos.logback.classic.LoggerContext context = (ch.qos.logback.classic.LoggerContext) factory;
-				JoranConfigurator configurator = new JoranConfigurator();
-				configurator.setContext(context);
-				context.reset();
-				configurator.doConfigure(configFileLocation);
-				StatusPrinter.printInCaseOfErrorsOrWarnings(context);
+				LogbackConfig.reconfigure(configFileLocation);
 			}
 		} catch (Exception e) {
 			throw new RuntimeException(e);
